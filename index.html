@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>WhatsApp Chat Viewer</title>
+<style>
+  :root {
+    --accent: #25d366;
+    --accent-dark: #128c7e;
+  }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background-color: #111b21;
+    color: #e9edef;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background 0.3s, color 0.3s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .header {
+    background-color: #202c33;
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+    font-size: 20px;
+    font-weight: bold;
+    border-bottom: 1px solid #2a3942;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-right: 15px;
+  }
+
+  .toggle-btn {
+    background: var(--accent);
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  .upload-box {
+    background: #202c33;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 15px;
+    text-align: center;
+    width: 90%;
+    max-width: 800px;
+  }
+
+  input[type="file"] {
+    padding: 10px;
+    background: #2a3942;
+    border-radius: 8px;
+    color: #e9edef;
+    cursor: pointer;
+    border: none;
+    width: 100%;
+  }
+
+  .search-bar {
+    background: #202c33;
+    width: 90%;
+    max-width: 800px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+  }
+
+  .search-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #e9edef;
+    font-size: 16px;
+    outline: none;
+  }
+
+  .chat-box {
+    width: 90%;
+    max-width: 800px;
+    height: 75vh;
+    border-radius: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    background: #0b141a;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 🌀 Advanced Scrollbar Style */
+  .chat-box::-webkit-scrollbar {
+    width: 18px;
+    background: transparent;
+  }
+
+  .chat-box::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+  }
+
+  .chat-box::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    transition: all 0.3s ease;
+    min-height: 40px;
+  }
+
+  /* Hover enlarge */
+  .chat-box:hover::-webkit-scrollbar-thumb {
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* 📱 Touch enlarge effect */
+  .chat-box:active::-webkit-scrollbar-thumb {
+    transform: scaleX(1.5);
+    box-shadow: 0 0 15px var(--accent);
+  }
+
+  /* 🧠 On click enlargement handled dynamically */
+  .scroll-active::-webkit-scrollbar-thumb {
+    transform: scaleX(5);
+    box-shadow: 0 0 20px var(--accent);
+  }
+
+  .message {
+    max-width: 70%;
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 8px;
+    position: relative;
+    word-wrap: break-word;
+    font-size: 15px;
+  }
+
+  .left { background: #202c33; align-self: flex-start; }
+  .right { background: #005c4b; align-self: flex-end; }
+
+  .timestamp {
+    font-size: 11px;
+    opacity: 0.6;
+    margin-left: 8px;
+  }
+
+  .tick {
+    color: #53bdeb;
+    font-size: 12px;
+    margin-left: 4px;
+  }
+
+  .date-divider {
+    text-align: center;
+    background: #182229;
+    color: #ccc;
+    margin: 15px auto;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    width: fit-content;
+  }
+
+  .highlight {
+    background-color: yellow;
+    color: black;
+    font-weight: bold;
+  }
+
+  /* 🌞 Light Mode */
+  body.light {
+    background: #f0f2f5;
+    color: #111;
+  }
+
+  body.light .header,
+  body.light .search-bar,
+  body.light .upload-box {
+    background: #fff;
+    color: #111;
+  }
+
+  body.light .chat-box {
+    background: #fff;
+  }
+
+  body.light .left {
+    background: #e4e6eb;
+    color: #111;
+  }
+
+  body.light .right {
+    background: #dcf8c6;
+    color: #111;
+  }
+
+  body.light .date-divider {
+    background: #d3d3d3;
+    color: #000;
+  }
+
+  body.light .tick {
+    color: #0084ff;
+  }
+
+  /* 📱 Responsive Design */
+  @media (max-width: 768px) {
+    .chat-box {
+      height: 70vh;
+      padding: 12px;
+    }
+    .message {
+      max-width: 85%;
+      font-size: 14px;
+    }
+    .header {
+      font-size: 18px;
+      padding: 10px;
+    }
+    .upload-box {
+      padding: 10px;
+      font-size: 14px;
+    }
+    .search-bar {
+      padding: 6px;
+      font-size: 14px;
+    }
+    input[type="file"] {
+      font-size: 13px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span>💬 WhatsApp Chat Viewer</span>
+  <div class="controls">
+    <button class="toggle-btn" onclick="toggleMode()">☀️ / 🌙</button>
+  </div>
+</div>
+
+<div class="upload-box">
+  <input type="file" id="fileInput" accept=".txt" onchange="loadChatFile(event)">
+</div>
+
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="🔍 Search messages or dates..." oninput="filterMessages()">
+</div>
+
+<div class="chat-box" id="chatBox">
+  <p style="text-align:center;color:gray;">Upload your WhatsApp chat .txt file to view</p>
+</div>
+
+<script>
+let allMessages = [];
+let user1 = "";
+let user2 = "";
+let darkMode = true;
+
+function loadChatFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    parseChat(e.target.result);
+  };
+  reader.readAsText(file);
+}
+
+function parseChat(text) {
+  const lines = text.split(/\r?\n/);
+  const pattern = /^(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2}(?:\s?[APMapm\.]*)?)\s-\s([^:]+):\s(.+)$/;
+
+  let messages = [];
+  lines.forEach(line => {
+    const match = line.match(pattern);
+    if (match) {
+      messages.push({ date: match[1], time: match[2], name: match[3], text: match[4] });
+    } else if (messages.length > 0) {
+      messages[messages.length - 1].text += "\n" + line;
+    }
+  });
+
+  if (!messages.length) {
+    document.getElementById("chatBox").innerHTML = "<p style='text-align:center;color:gray;'>⚠️ Invalid chat format</p>";
+    return;
+  }
+
+  allMessages = messages;
+  user1 = messages[0].name;
+  user2 = messages.find(m => m.name !== user1)?.name || "User 2";
+  renderMessages(messages);
+}
+
+function renderMessages(messages) {
+  const chatBox = document.getElementById("chatBox");
+  chatBox.innerHTML = "";
+  let lastDate = "";
+
+  messages.forEach(msg => {
+    if (msg.date !== lastDate) {
+      const dateDiv = document.createElement("div");
+      dateDiv.className = "date-divider";
+      dateDiv.textContent = msg.date;
+      chatBox.appendChild(dateDiv);
+      lastDate = msg.date;
+    }
+
+    const div = document.createElement("div");
+    div.classList.add("message", msg.name === user1 ? "left" : "right");
+
+    let text = `${msg.text}<span class="timestamp">${msg.time}`;
+    if (msg.name === user2) text += ` <span class="tick">✔✔</span>`;
+    text += `</span>`;
+    div.innerHTML = text;
+    chatBox.appendChild(div);
+  });
+
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function filterMessages() {
+  const query = document.getElementById("searchInput").value.toLowerCase();
+  if (!query.trim()) return renderMessages(allMessages);
+
+  const filtered = [];
+  let lastDate = "";
+
+  allMessages.forEach(msg => {
+    if (msg.text.toLowerCase().includes(query) || msg.date.toLowerCase().includes(query)) {
+      if (msg.date !== lastDate) {
+        filtered.push({ date: msg.date, time: "", name: "date", text: "" });
+        lastDate = msg.date;
+      }
+      filtered.push(msg);
+    }
+  });
+
+  renderMessages(filtered);
+
+  document.querySelectorAll(".message").forEach(div => {
+    div.innerHTML = div.innerHTML.replace(
+      new RegExp(query, "gi"),
+      match => `<span class="highlight">${match}</span>`
+    );
+  });
+}
+
+/* 🌙 Light/Dark Mode */
+function toggleMode() {
+  darkMode = !darkMode;
+  document.body.classList.toggle("light", !darkMode);
+}
+
+/* 🧠 Scroll Click Enlargement */
+const chatBox = document.getElementById("chatBox");
+chatBox.addEventListener("mousedown", () => chatBox.classList.add("scroll-active"));
+chatBox.addEventListener("mouseup", () => setTimeout(() => chatBox.classList.remove("scroll-active"), 300));
+chatBox.addEventListener("touchstart", () => chatBox.classList.add("scroll-active"));
+chatBox.addEventListener("touchend", () => setTimeout(() => chatBox.classList.remove("scroll-active"), 300));
+</script>
+</body>
+</html>
